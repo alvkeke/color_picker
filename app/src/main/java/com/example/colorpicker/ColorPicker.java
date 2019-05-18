@@ -1,5 +1,6 @@
 package com.example.colorpicker;
 
+import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -54,7 +55,7 @@ public class ColorPicker extends View {
         wheelPaint = new Paint();
         paint = new Paint();
 
-        //paint.setColor(0xAA000000);
+        paint.setColor(0xAA000000);
 
         int colorAngleStep = 360/12;
 
@@ -124,12 +125,7 @@ public class ColorPicker extends View {
         createPaint();
     }
 
-    @Override
-    protected void onDraw(Canvas canvas) {
-        super.onDraw(canvas);
-        canvas.drawCircle(midX, midY, radius, wheelPaint);
-        //paint.setColor(Color.WHITE);
-        //canvas.drawCircle(midX, midY, (float)radius/2, paint);
+    void drawSelectPoint(Canvas canvas){
         if(touchY!=0 && touchX != 0) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 for (int i = 0; i < 360; i += 5) {
@@ -138,6 +134,16 @@ public class ColorPicker extends View {
                 }
             }
         }
+    }
+
+    @Override
+    protected void onDraw(Canvas canvas) {
+        super.onDraw(canvas);
+        canvas.drawCircle(midX, midY, radius, wheelPaint);
+        //paint.setColor(Color.WHITE);
+        //canvas.drawCircle(midX, midY, (float)radius/2, paint);
+        drawSelectPoint(canvas);
+        //canvas.drawCircle(touchX, touchY, 15, paint);
     }
 
     @Override
@@ -163,6 +169,9 @@ public class ColorPicker extends View {
             }
             mReturnColor = toColor(colors, (float) unit);
             ((colorPickerCallback)context).colorChange(mReturnColor);
+            //setBackgroundColor(mReturnColor);
+            //这一句很重要，如果没有则会出现图片不刷新的情况
+            invalidate();
         }
         return true;
     }
