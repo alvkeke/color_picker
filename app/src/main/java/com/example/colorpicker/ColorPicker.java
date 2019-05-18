@@ -20,6 +20,7 @@ public class ColorPicker extends View {
 
     int midX, midY;
     int radius;
+    int selRadius;
 
     float touchX, touchY;
 
@@ -30,24 +31,30 @@ public class ColorPicker extends View {
 
     int mReturnColor;
 
+    Context context;
+
     public ColorPicker(Context context) {
         super(context);
         init();
+        this.context = context;
     }
     public ColorPicker(Context context, AttributeSet attrs){
         super(context, attrs);
         init();
+        this.context = context;
     }
     public ColorPicker(Context context, AttributeSet attrs, int style){
         super(context, attrs, style);
         init();
+        this.context = context;
     }
 
     void init(){
+        selRadius = 15;
         wheelPaint = new Paint();
         paint = new Paint();
 
-        paint.setColor(0xAA000000);
+        //paint.setColor(0xAA000000);
 
         int colorAngleStep = 360/12;
 
@@ -59,6 +66,10 @@ public class ColorPicker extends View {
             colors[i] = Color.HSVToColor(hsv);
         }
 
+    }
+
+    public interface colorPickerCallback{
+        void colorChange(int color);
     }
 
     int getColor(){
@@ -108,7 +119,7 @@ public class ColorPicker extends View {
         midX = w/2;
         midY = h/2;
 
-        radius = Math.min(midX, midY);
+        radius = Math.min(midX, midY) - selRadius - 1;
 
         createPaint();
     }
@@ -119,9 +130,12 @@ public class ColorPicker extends View {
         canvas.drawCircle(midX, midY, radius, wheelPaint);
         //paint.setColor(Color.WHITE);
         //canvas.drawCircle(midX, midY, (float)radius/2, paint);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            for (int i = 0; i<360; i+=5){
-                canvas.drawArc(touchX-15, touchY-15, touchX+15, touchY+15, i, 80, false, paint);
+        if(touchY!=0 && touchX != 0) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                for (int i = 0; i < 360; i += 5) {
+                    canvas.drawArc(touchX - selRadius, touchY - selRadius, touchX + selRadius,
+                            touchY + selRadius, i, 90, false, paint);
+                }
             }
         }
     }
@@ -134,14 +148,21 @@ public class ColorPicker extends View {
             float cy = touchY - midY;
             float cx = touchX - midX;
 
+            float d = (float) Math.sqrt(cy*cy+cx*cx);
+
             double angle = Math.atan2(cy, cx);
+
+            if(d > radius){
+                touchX = (float) (radius*Math.cos(angle)) + midX;
+                touchY = (float) (radius*Math.sin(angle)) + midY;
+            }
+
             double unit = angle/(2*3.141592653589f);
             if(unit<0){
                 unit+=1;
             }
             mReturnColor = toColor(colors, (float) unit);
-
-            setBackgroundColor(mReturnColor);
+            ((colorPickerCallback)context).colorChange(mReturnColor);
         }
         return true;
     }
